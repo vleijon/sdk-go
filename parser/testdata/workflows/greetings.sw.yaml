@@ -14,26 +14,21 @@
 
 id: greeting
 version: '1.0'
+specVersion: '0.8'
 name: Greeting Workflow
 description: Greet Someone
-specVersion: "0.7"
-start:
-  stateName: Greet
+start: Greet
 functions:
-  - name: greetingFunction
-    operation: file://myapis/greetingapis.json#greeting
+- name: greetingFunction
+  operation: file://myapis/greetingapis.json#greeting
 states:
-  - name: Greet
-    type: operation
-    actionMode: sequential
-    actions:
-      - functionRef:
-          refName: greetingFunction
-          parameters:
-            name: "$.greet.name"
-        actionDataFilter:
-          dataResultsPath: "$.payload.greeting"
-    stateDataFilter:
-      dataOutputPath: "$.greeting"
-    end:
-      terminate: true
+- name: Greet
+  type: operation
+  actions:
+  - functionRef:
+      refName: greetingFunction
+      arguments:
+        name: "${ .person.name }"
+    actionDataFilter:
+      results: "${ {greeting: .greeting} }"
+  end: true

@@ -1,49 +1,42 @@
 {
   "id": "eventbasedgreeting",
   "version": "1.0",
+  "specVersion": "0.8",
   "name": "Event Based Greeting Workflow",
   "description": "Event Based Greeting",
-  "specVersion": "0.7",
-  "start": {
-    "stateName": "Greet"
-  },
+  "start": "Greet",
   "events": "testdata/eventbasedgreetingevents.json",
   "functions": [
     {
-      "name": "greetingFunction",
-      "operation": "file://myapis/greetingapis.json#greeting"
+       "name": "greetingFunction",
+       "operation": "file://myapis/greetingapis.json#greeting"
     }
   ],
-  "states": [
+  "states":[
     {
-      "name": "Greet",
-      "type": "event",
-      "onEvents": [
-        {
-          "eventRefs": [
-            "GreetingEvent"
-          ],
-          "eventDataFilter": {
-            "data": "{{ $.data.greet }}"
-          },
-          "actions": [
-            {
-              "functionRef": {
-                "refName": "greetingFunction",
-                "arguments": {
-                  "name": "{{ $.greet.name }}"
-                }
+       "name":"Greet",
+       "type":"event",
+       "onEvents": [{
+           "eventRefs": ["GreetingEvent"],
+           "eventDataFilter": {
+              "data": "${ .greet }",
+              "toStateData": "${ .greet }"
+           },
+           "actions":[
+              {
+                 "functionRef": {
+                    "refName": "greetingFunction",
+                    "arguments": {
+                      "name": "${ .greet.name }"
+                    }
+                 }
               }
-            }
-          ]
-        }
-      ],
-      "stateDataFilter": {
-        "output": "{{ $.payload.greeting }}"
-      },
-      "end": {
-        "terminate": true
-      }
+           ]
+       }],
+       "stateDataFilter": {
+          "output": "${ .payload.greeting }"
+       },
+       "end": true
     }
   ]
-}
+  }

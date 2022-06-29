@@ -15,10 +15,12 @@
 package parser
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/serverlessworkflow/sdk-go/v2/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,6 +53,33 @@ func TestCustomValidators(t *testing.T) {
 
 func TestFromFile(t *testing.T) {
 	files := map[string]func(*testing.T, *model.Workflow){
+		"./testdata/workflows/helloworld.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "helloworld", w.ID)
+			assert.Equal(t, w.Start.StateName, "Hello State")
+			assert.IsType(t, w.States[0], &model.InjectState{})
+			assert.Equal(t, w.States[0].(*model.InjectState).Data["result"], "Hello World!")
+		},
+		"./testdata/workflows/solvemathproblems.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "solvemathproblems", w.ID)
+			assert.IsType(t, w.States[0], &model.ForEachState{})
+			state := w.States[0].(*model.ForEachState)
+			assert.Equal(t, "Solve", state.Name)
+			assert.Equal(t, state.IterationParam, "singleexpression")
+			//			fmt.Printf("%+v\n", spew.Sdump(w))
+		},
+		"./testdata/workflows/parallelexec.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "parallelexec", w.ID)
+			assert.IsType(t, w.States[0], &model.ParallelState{})
+		},
+		"./testdata/workflows/asyncfunction.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "sendcustomeremail", w.ID)
+			assert.IsType(t, w.States[0], &model.OperationState{})
+			state := w.States[0].(*model.OperationState)
+			assert.Equal(t, "Send Email", state.Name)
+		},
+		"./testdata/workflows/customfunction.json": func(t *testing.T, w *model.Workflow) {
+			fmt.Printf("%+v\n", spew.Sdump(w))
+		},
 		"./testdata/workflows/greetings.sw.json": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "greeting", w.ID)
 			assert.IsType(t, &model.OperationState{}, w.States[0])
@@ -64,6 +93,15 @@ func TestFromFile(t *testing.T) {
 			assert.Equal(t, "greetingFunction", w.States[0].(*model.OperationState).Actions[0].FunctionRef.RefName)
 		},
 		"./testdata/workflows/eventbasedgreeting.sw.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "GreetingEvent", w.Events[0].Name)
+			assert.IsType(t, &model.EventState{}, w.States[0])
+			eventState := w.States[0].(*model.EventState)
+			assert.NotNil(t, eventState)
+			assert.NotEmpty(t, eventState.OnEvents)
+			assert.Equal(t, "GreetingEvent", eventState.OnEvents[0].EventRefs[0])
+			assert.Equal(t, true, eventState.Exclusive)
+		},
+		"./testdata/workflows/eventbasedgreeting.yaml": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "GreetingEvent", w.Events[0].Name)
 			assert.IsType(t, &model.EventState{}, w.States[0])
 			eventState := w.States[0].(*model.EventState)
@@ -243,9 +281,11 @@ func TestFromFile(t *testing.T) {
 		},
 	}
 	for file, f := range files {
-		workflow, err := FromFile(file)
-		assert.NoError(t, err, "Test File", file)
-		assert.NotNil(t, workflow, "Test File", file)
-		f(t, workflow)
+		t.Run(file, func(t *testing.T) {
+			workflow, err := FromFile(file)
+			assert.NoError(t, err, "Test File", file)
+			assert.NotNil(t, workflow, "Test File", file)
+			f(t, workflow)
+		})
 	}
 }

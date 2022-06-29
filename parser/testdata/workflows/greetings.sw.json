@@ -1,38 +1,34 @@
 {
   "id": "greeting",
   "version": "1.0",
+  "specVersion": "0.8",
   "name": "Greeting Workflow",
   "description": "Greet Someone",
-  "specVersion": "0.7",
-  "start": {
-    "stateName": "Greet"
-  },
+  "start": "Greet",
   "functions": [
     {
-      "name": "greetingFunction",
-      "operation": "file://myapis/greetingapis.json#greeting"
+       "name": "greetingFunction",
+       "operation": "file://myapis/greetingapis.json#greeting"
     }
   ],
-  "states": [
+  "states":[
     {
-      "name": "Greet",
-      "type": "operation",
-      "actions": [
-        {
-          "functionRef": {
-            "refName": "greetingFunction",
-            "parameters": {
-              "name": "{{ $.person.name }}"
-            }
-          },
-          "actionDataFilter": {
-            "dataResultsPath": "{{ $.greeting }}"
+       "name":"Greet",
+       "type":"operation",
+       "actions":[
+          {
+             "functionRef": {
+                "refName": "greetingFunction",
+                "arguments": {
+                  "name": "${ .person.name }"
+                }
+             },
+             "actionDataFilter": {
+                "results": "${ {greeting: .greeting} }"
+             }
           }
-        }
-      ],
-      "end": {
-        "terminate": true
-      }
+       ],
+       "end": true
     }
   ]
-}
+  }
