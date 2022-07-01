@@ -17,6 +17,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 const (
@@ -205,6 +206,18 @@ func (w *Workflow) setDefaults() {
 	}
 }
 
+func (w *Workflow) GetFirstState() State {
+	if w.Start != nil {
+		for _, s := range w.States {
+			if s.GetName() == w.Start.StateName {
+				return s
+			}
+		}
+		log.Fatalf("start state %s not found", w.Start.StateName)
+	}
+	return w.States[0]
+}
+
 // WorkflowRef holds a reference for a workflow definition
 type WorkflowRef struct {
 	// Sub-workflow unique id
@@ -354,7 +367,7 @@ type Error struct {
 
 // Start definition
 type Start struct {
-	StateName string    `json:"stateName" validate:"required"`
+	StateName string    `json:"stateName"`
 	Schedule  *Schedule `json:"schedule,omitempty" validate:"omitempty"`
 }
 
