@@ -206,16 +206,30 @@ func (w *Workflow) setDefaults() {
 	}
 }
 
+func (w *Workflow) GetState(state string) State {
+	for _, s := range w.States {
+		if s.GetName() == state {
+			return s
+		}
+	}
+	log.Fatalf("State %s not found", state)
+	return nil
+}
 func (w *Workflow) GetFirstState() State {
 	if w.Start != nil {
-		for _, s := range w.States {
-			if s.GetName() == w.Start.StateName {
-				return s
-			}
-		}
-		log.Fatalf("start state %s not found", w.Start.StateName)
+		w.GetState(w.Start.StateName)
 	}
 	return w.States[0]
+}
+
+func (w *Workflow) GetFunction(function string) *Function {
+	for _, f := range w.Functions {
+		if f.Name == function {
+			return &f
+		}
+	}
+	log.Fatalf("Function %s not found", function)
+	return nil
 }
 
 // WorkflowRef holds a reference for a workflow definition
