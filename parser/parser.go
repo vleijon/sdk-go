@@ -17,11 +17,12 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/serverlessworkflow/sdk-go/v2/validator"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/serverlessworkflow/sdk-go/v2/validator"
 
 	"github.com/serverlessworkflow/sdk-go/v2/model"
 	"sigs.k8s.io/yaml"

@@ -273,6 +273,12 @@ func (s *WorkflowRef) UnmarshalJSON(data []byte) error {
 	if err := unmarshalKey("workflowId", subflowRef, &s.WorkflowID); err != nil {
 		return err
 	}
+	if err := unmarshalKey("onParentComplete", subflowRef, &s.OnParentComplete); err != nil {
+		return err
+	}
+	if err := unmarshalKey("invoke", subflowRef, &s.Invoke); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -581,8 +587,12 @@ type End struct {
 func (e *End) UnmarshalJSON(data []byte) error {
 	endMap := make(map[string]json.RawMessage)
 	if err := json.Unmarshal(data, &endMap); err != nil {
-		e.Terminate = false
-		e.Compensate = false
+		if val, err := unmarshalBool(data); err == nil {
+			e.Terminate = val
+		} else {
+			e.Terminate = false
+			e.Compensate = false
+		}
 		return nil
 	}
 
