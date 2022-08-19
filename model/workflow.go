@@ -62,9 +62,10 @@ type BaseWorkflow struct {
 	Name string `json:"name" validate:"required"`
 	// Workflow description
 	Description string `json:"description,omitempty"`
+	// Workflow start definition
+	Start *Start `json:"start"`
 	// Workflow version
 	Version string `json:"version" validate:"omitempty,min=1"`
-	Start   *Start `json:"start"`
 	// Annotations List of helpful terms describing the workflows intended purpose, subject areas, or other important qualities
 	Annotations []string `json:"annotations,omitempty"`
 	// DataInputSchema URI of the JSON Schema used to validate the workflow data input
@@ -206,6 +207,7 @@ func (w *Workflow) setDefaults() {
 	}
 }
 
+// GetState returns the state with the given name
 func (w *Workflow) GetState(state string) State {
 	for _, s := range w.States {
 		if s.GetName() == state {
@@ -215,6 +217,9 @@ func (w *Workflow) GetState(state string) State {
 	log.Fatalf("State %s not found", state)
 	return nil
 }
+
+// GetFirstState returns the starting state of the workflow.
+// Either the first state or the named Start state.
 func (w *Workflow) GetFirstState() State {
 	if w.Start != nil {
 		w.GetState(w.Start.StateName)
@@ -222,6 +227,7 @@ func (w *Workflow) GetFirstState() State {
 	return w.States[0]
 }
 
+// GetFunction returns the function with the given name
 func (w *Workflow) GetFunction(function string) *Function {
 	for _, f := range w.Functions {
 		if f.Name == function {
@@ -232,12 +238,23 @@ func (w *Workflow) GetFunction(function string) *Function {
 	return nil
 }
 
+const (
+	ParentCompleteTypeTerminate = "terminate"
+	ParentCompleteTypeContinue  = "continue"
+)
+
+type ParentCompleteType string
+
 // WorkflowRef holds a reference for a workflow definition
 type WorkflowRef struct {
 	// Sub-workflow unique id
 	WorkflowID string `json:"workflowId" validate:"required"`
 	// Sub-workflow version
 	Version string `json:"version,omitempty"`
+	// Specifies if the subflow should be invoked sync or async. Default is sync
+	Invoke InvokeType `json:"invoke,omitempty"`
+	// If invoke is async, specifies if subflow execution should terminate or continue when parent workflow completes. Default is terminate
+	OnParentComplete ParentCompleteType `json:"onParentComplete,omitempty"`
 }
 
 // UnmarshalJSON ...
@@ -415,7 +432,8 @@ type DefaultCondition struct {
 type Schedule struct {
 	// Time interval (must be repeating interval) described with ISO 8601 format. Declares when workflow instances will be automatically created.
 	Interval string `json:"interval,omitempty"`
-	Cron     *Cron  `json:"cron,omitempty"`
+	// Cron expression defining when workflow instances should be automatically created
+	Cron *Cron `json:"cron,omitempty"`
 	// Timezone name used to evaluate the interval & cron-expression. (default: UTC)
 	Timezone string `json:"timezone,omitempty"`
 }
@@ -615,6 +633,8 @@ type StateDataFilter struct {
 
 // EventDataFilter ...
 type EventDataFilter struct {
+	// If set to false, event payload is not added/merged to state data. In this case 'data' and 'toStateData' should be ignored. Default is true.
+	UseData *bool `json:"useData,omitempty"`
 	// Workflow expression that filters of the event data (payload)
 	Data string `json:"data,omitempty"`
 	// Workflow expression that selects a state data element to which the event payload should be added/merged into. If not specified, denotes, the top-level state data element.

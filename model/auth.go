@@ -17,9 +17,10 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+
 	val "github.com/serverlessworkflow/sdk-go/v2/validator"
 	"gopkg.in/go-playground/validator.v8"
-	"reflect"
 )
 
 func init() {

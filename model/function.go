@@ -36,7 +36,7 @@ const (
 // FunctionType ...
 type FunctionType string
 
-// Function ...
+// Function represents Function Definition in the specification.
 type Function struct {
 	Common
 	// Unique function name
@@ -49,6 +49,16 @@ type Function struct {
 	AuthRef string `json:"authRef,omitempty" validate:"omitempty,min=1"`
 }
 
+const (
+	// InvokeTypeSync ...
+	InvokeTypeSync InvokeType = "sync"
+	// InvokeTypeAsync ...
+	InvokeTypeAsync InvokeType = "async"
+)
+
+// InvokeType ...
+type InvokeType string
+
 // FunctionRef ...
 type FunctionRef struct {
 	// Name of the referenced function
@@ -57,6 +67,8 @@ type FunctionRef struct {
 	Arguments map[string]interface{} `json:"arguments,omitempty"`
 	// String containing a valid GraphQL selection set
 	SelectionSet string `json:"selectionSet,omitempty"`
+	// Specifies if the function should be invoked sync or async. Default is sync
+	Invoke InvokeType `json:"invoke,omitempty"`
 }
 
 // UnmarshalJSON ...
