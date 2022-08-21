@@ -70,11 +70,16 @@ type Correlation struct {
 }
 
 // EventRef ...
+// TODO: Determine if we should remove old fields or at least add validation depending on spec version.
 type EventRef struct {
 	// Reference to the unique name of a 'produced' event definition
-	TriggerEventRef string `json:"triggerEventRef" validate:"required"`
+	TriggerEventRef string `json:"triggerEventRef" validate:"required"` // Older spec version
+	ProduceEventRef string `json:"produceEventref" validate:"required"` // 0.8
 	// Reference to the unique name of a 'consumed' event definition
-	ResultEventRef string `json:"resultEventRef" validate:"required"`
+	ResultEventRef  string `json:"resultEventRef" validate:"required"` // Older spec version
+	ConsumeEventRef string `json:"consumeEventRef" validate:"required"`
+	// Maximum amount of time (ISO 8601 format) to wait for the consume event. If not defined it be set to the actionExecutionTimeout
+	ConsumeEventTimeout string `json:"consumeEventTimeout,omitempty"`
 	// TODO: create StringOrMap structure
 	// If string type, an expression which selects parts of the states data output to become the data (payload) of the event referenced by 'triggerEventRef'. If object type, a custom object to become the data (payload) of the event referenced by 'triggerEventRef'.
 	Data interface{} `json:"data,omitempty"`

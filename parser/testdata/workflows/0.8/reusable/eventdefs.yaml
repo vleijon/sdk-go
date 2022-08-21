@@ -1,0 +1,9 @@
+events:
+  - name: PaymentReceivedEvent
+    type: payment.receive
+    source: paymentEventSource
+    correlation:
+      - contextAttributeName: accountId
+  - name: ConfirmationCompletedEvent
+    type: payment.confirmation
+    kind: produced

@@ -18,6 +18,6 @@ if [ -s golint_errors ]  ; then
     code=1
 fi
 rm -f golint_errors
-golangci-lint run ./... --enable golint --timeout 2m0s
+golangci-lint run ./... --enable golint
 
 exit ${code:0}

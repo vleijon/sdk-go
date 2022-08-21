@@ -281,7 +281,7 @@ type CallbackStateTimeout struct {
 	EventTimeout      string           `json:"eventTimeout,omitempty"`
 }
 
-// SleepState ...
+// SleepState suspends workflow execution for a given time duration. The delay is defined in its duration property using the ISO 8601 duration format.
 type SleepState struct {
 	BaseState
 	// Duration (ISO 8601 duration format) to sleep
