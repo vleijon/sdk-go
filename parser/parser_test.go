@@ -50,7 +50,8 @@ func TestBasicValidationv08(t *testing.T) {
 		if !file.IsDir() {
 			filename := filepath.Join(rootPath, file.Name())
 			workflow, err := FromFile(filename)
-			assert.NoError(t, err, "error parsing workflow %s", file.Name())
+			assert.NoErrorf(t, err, "Error parsing workflow: %s (%s)", file.Name(), err)
+			assert.NotNilf(t, workflow, "Workflow is nil: %s", file.Name())
 			assert.NotEmpty(t, workflow.Name)
 			assert.NotEmpty(t, workflow.ID)
 			assert.NotEmpty(t, workflow.States)
@@ -75,6 +76,7 @@ func TestCustomValidators(t *testing.T) {
 
 // TestFromFilev08 tests all examples for specVersion 0.8.
 // The examples are taken from https://github.com/serverlessworkflow/specification/blob/main/examples/README.md
+// The intent is not to run complete tests but to ensure that the examples are valid and test some key elements of them.
 func TestFromFilev08(t *testing.T) {
 	files := map[string]func(*testing.T, *model.Workflow){
 		"./testdata/workflows/0.8/helloworld.json": func(t *testing.T, w *model.Workflow) {
@@ -207,7 +209,6 @@ func TestFromFilev08(t *testing.T) {
 			assert.Equal(t, "MissingQuantity", onerr[2].Transition.NextState)
 			s1 := w.States[1].(*model.OperationState)
 			assert.False(t, s1.End.Terminate)
-			//			fmt.Printf("JSON: %s %v", val, err)
 		},
 		"./testdata/workflows/0.8/jobmonitoring.json": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "jobmonitoring", w.ID)
@@ -324,6 +325,59 @@ func TestFromFilev08(t *testing.T) {
 			assert.Equal(t, "ConfirmationCompletedEvent", s3.End.ProduceEvents[0].EventRef)
 			assert.Equal(t, "${ .payment }", s3.End.ProduceEvents[0].Data)
 		},
+		"./testdata/workflows/0.8/patientonboarding.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "patientonboarding", w.ID)
+			s0 := w.States[0].(*model.EventState)
+			assert.Equal(t, "NewPatientEvent", s0.OnEvents[0].EventRefs[0])
+			acts := s0.OnEvents[0].Actions
+			assert.Len(t, acts, 3)
+			assert.Equal(t, "StorePatient", acts[0].FunctionRef.RefName)
+			assert.Equal(t, "ServicesNotAvailableRetryStrategy", acts[0].RetryRef)
+			assert.Len(t, acts[0].RetryableErrors, 1)
+			assert.Equal(t, "ServiceNotAvailable", acts[0].RetryableErrors[0])
+			assert.Equal(t, "ServiceNotAvailable", s0.OnErrors[0].ErrorRef)
+			errors := w.Errors
+			assert.Len(t, errors, 1)
+			assert.Equal(t, "ServiceNotAvailable", errors[0].Name)
+			assert.Equal(t, "503", errors[0].Code)
+
+			retries := w.Retries
+			assert.Len(t, retries, 1)
+			assert.Equal(t, "ServicesNotAvailableRetryStrategy", retries[0].Name)
+			assert.Equal(t, "PT3S", retries[0].Delay)
+			assert.EqualValues(t, 10, retries[0].MaxAttempts.IntVal)
+		},
+		"./testdata/workflows/0.8/order.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "order", w.ID)
+			assert.Equal(t, "CancelOrder", w.Timeouts.WorkflowExecTimeout.RunBefore)
+			assert.Equal(t, "PT30D", w.Timeouts.WorkflowExecTimeout.Duration)
+			assert.Len(t, w.States, 4)
+			assert.Len(t, w.Events, 5)
+		},
+		"./testdata/workflows/0.8/roomreadings.yaml": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "roomreadings", w.ID)
+			assert.Equal(t, true, w.KeepActive)
+			assert.Equal(t, "GenerateReport", w.Timeouts.WorkflowExecTimeout.RunBefore)
+			assert.Equal(t, "PT1H", w.Timeouts.WorkflowExecTimeout.Duration)
+			s0 := w.States[0].(*model.EventState)
+			assert.Len(t, s0.OnEvents[0].EventRefs, 2)
+		},
+		"./testdata/workflows/0.8/checkcarvitals.yaml": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "checkcarvitals", w.ID)
+			s1 := w.States[1].(*model.OperationState)
+			actions := s1.Actions
+			assert.Len(t, actions, 1)
+			assert.Equal(t, "vitalscheck", actions[0].SubFlowRef.WorkflowID)
+			assert.Equal(t, "PT1S", actions[0].Sleep.After)
+			s2 := w.States[2].(*model.EventBasedSwitchState)
+			assert.Equal(t, "DoCarVitalChecks", s2.DefaultCondition.Transition.NextState)
+			eventCond := s2.EventConditions[0].(*model.EndEventCondition)
+			assert.Equal(t, "CarTurnedOffEvent", eventCond.GetEventRef())
+			assert.Equal(t, false, eventCond.End.Terminate)
+		},
+		"./testdata/workflows/0.8/booklending.json": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "booklending", w.ID)
+		},
 		"./testdata/workflows/0.8/customfunction.json": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "customerbankingtransactions", w.ID)
 			//			fmt.Printf("%+v\n", spew.Sdump(w))
@@ -332,8 +386,8 @@ func TestFromFilev08(t *testing.T) {
 	for file, f := range files {
 		t.Run(file, func(t *testing.T) {
 			workflow, err := FromFile(file)
-			assert.NoError(t, err, "Test File", file)
-			assert.NotNil(t, workflow, "Test File", file)
+			assert.NoErrorf(t, err, "Test File", file)
+			assert.NotNilf(t, workflow, "Test File", file)
 			f(t, workflow)
 		})
 	}
