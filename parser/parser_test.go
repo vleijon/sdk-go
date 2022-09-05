@@ -378,6 +378,20 @@ func TestFromFilev08(t *testing.T) {
 		"./testdata/workflows/0.8/booklending.json": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "booklending", w.ID)
 		},
+		"./testdata/workflows/0.8/bankingtransactions.yaml": func(t *testing.T, w *model.Workflow) {
+			assert.Equal(t, "bankingtransactions", w.ID)
+			s0 := w.States[0].(*model.ForEachState)
+
+			constants := w.Constants.Data
+			assert.Len(t, constants, 1)
+			assert.Contains(t, constants, "largetxamount")
+			assert.EqualValues(t, "5000", constants["largetxamount"])
+
+			actions := s0.Actions
+			assert.Len(t, actions, 2)
+			assert.Equal(t, "${ .tx >= $CONST.largetxamount }", actions[0].Condition)
+
+		},
 		"./testdata/workflows/0.8/customfunction.json": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "customerbankingtransactions", w.ID)
 			//			fmt.Printf("%+v\n", spew.Sdump(w))

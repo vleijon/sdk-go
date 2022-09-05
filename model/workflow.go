@@ -570,6 +570,8 @@ type Action struct {
 	RetryableErrors []string `json:"retryableErrors,omitempty" validate:"omitempty,min=1"`
 	// Action data filter
 	ActionDataFilter ActionDataFilter `json:"actionDataFilter,omitempty"`
+	// Expression, if defined, must evaluate to true for this action to be performed. If false, action is disregarded	
+	Condition string `json:"condition,omitempty"`
 }
 
 // End definition
