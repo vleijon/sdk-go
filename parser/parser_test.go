@@ -377,6 +377,18 @@ func TestFromFilev08(t *testing.T) {
 		},
 		"./testdata/workflows/0.8/booklending.json": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "booklending", w.ID)
+			states := w.States
+			assert.Len(t, states, 8)
+
+			s6 := states[6].(*model.SleepState)
+			assert.Equal(t, "PT2W", s6.Duration)
+
+			s7 := states[7].(*model.OperationState)
+			actions := s7.Actions
+			assert.Len(t, actions, 2)
+			assert.Len(t, actions[0].FunctionRef.Arguments, 1)
+			assert.Len(t, actions[1].FunctionRef.Arguments, 2)
+
 		},
 		"./testdata/workflows/0.8/bankingtransactions.yaml": func(t *testing.T, w *model.Workflow) {
 			assert.Equal(t, "bankingtransactions", w.ID)
