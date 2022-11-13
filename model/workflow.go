@@ -570,8 +570,16 @@ type Action struct {
 	RetryableErrors []string `json:"retryableErrors,omitempty" validate:"omitempty,min=1"`
 	// Action data filter
 	ActionDataFilter ActionDataFilter `json:"actionDataFilter,omitempty"`
-	// Expression, if defined, must evaluate to true for this action to be performed. If false, action is disregarded	
+	// Expression, if defined, must evaluate to true for this action to be performed. If false, action is disregarded
 	Condition string `json:"condition,omitempty"`
+}
+
+// UseResults specifies if action results should be used
+func (a *Action) UseResults() bool {
+	if a.ActionDataFilter.UseResults != nil && !(*a.ActionDataFilter.UseResults) {
+		return false
+	}
+	return true
 }
 
 // End definition
